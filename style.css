@@ -30,8 +30,8 @@ body {
     transform: scale(0.95); /* 少しだけボタンを凹ませるエフェクト */
 }
 
-/* ショップの購入ボタンのデザイン */
-#buy-auto-btn {
+/* ショップの購入ボタンのデザイン (共通) */
+.shop-btn {
     font-size: 18px; /* メインボタンより少し控えめなサイズ */
     padding: 10px 20px;
     cursor: pointer;
@@ -43,12 +43,12 @@ body {
 }
 
 /* 買える状態の時にクリックした時のへこみ */
-#buy-auto-btn:active:not(:disabled) {
+.shop-btn:active:not(:disabled) {
     transform: scale(0.95);
 }
 
 /* 「購入ボタン」が無効化されているときの最強のルール */
-#buy-auto-btn:disabled {
+.shop-btn:disabled {
     background-color: #cccccc; /* 灰色にする */
     cursor: not-allowed; /* カーソルを「禁止マーク」にする */
     transform: none; /* クリックしても凹まないようにする */
