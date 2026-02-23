@@ -8,7 +8,7 @@ const clickButton = document.getElementById('click-btn');
 // ③ ボタンがクリックされたときの処理を作る
 clickButton.addEventListener('click', ( event) => {
     // スコアを1増やす
-    score = score + 1;
+    score = score + clickPower;
     // HTMLの「0」と書かれていた部分のテキストを、新しいスコアに書き換える
     scoreDisplay.textContent = score;
     // 残高チェック
@@ -17,12 +17,15 @@ clickButton.addEventListener('click', ( event) => {
     saveGame();
 
     // event.pageX と event.pageY には、クリックした瞬間のマウスのX・Y座標が入っています
-    createFloatingText( event.pageX, event.pageY);
+    createFloatingText( event.pageX, event.pageY, clickPower);
 });
 
 // ====== ここからショップと自動化のプログラム ======
 
 // ① 新しいデータを保存する箱（変数）を用意する
+let clickPower = 1; // 1クリックあたりの増加量（最初は1）
+let clickUpgradeCount = 0; // 強化した回数
+let clickUpgradeCost = 50; // 次の強化コスト（最初は50）
 let autoCount = 0; // 持っている装置の数
 let autoCost = 10; // 次に装置を買うために必要なスコア（最初は10）
 let factoryCount = 0;
@@ -35,8 +38,31 @@ const buyAutoBtn = document.getElementById('buy-auto-btn');
 const factoryCountDisplay = document.getElementById('factory-count');
 const factoryCostDisplay = document.getElementById('factory-cost');
 const buyFactoryBtn = document.getElementById('buy-factory-btn');
+const clickUpgradeCountDisplay = document.getElementById( 'click-upgrade-count');
+const currentClickPowerDisplay = document.getElementById( 'current-click-power');
+const clickUpgradeCostDisplay = document.getElementById( 'click-upgrade-cost');
+const buyClickUpgradeBtn = document.getElementById( 'buy-click-upgrade-btn');
 
 // ③ 「装置を買う」ボタンが押されたときの処理
+buyClickUpgradeBtn.addEventListener( 'click', () => {
+    if ( score >= clickUpgradeCost) {
+        score = score - clickUpgradeCost;
+        clickPower = clickPower + 1; // 1クリックの威力を+1する
+
+        // 強化は強力なので、コストは1.5倍ではなく「2倍」ずつ増える設定にします
+        clickUpgradeCost = Math.floor( clickUpgradeCost * 2);
+
+        // 画面の更新
+        scoreDisplay.textContent = score;
+        clickUpgradeCountDisplay.textContent = clickUpgradeCount;
+        currentClickPowerDisplay.textContent = clickPower;
+        clickUpgradeCostDisplay.textContent = clickUpgradeCost;
+
+        checkFunds();
+        saveGame();
+    }
+});
+
 buyAutoBtn.addEventListener('click', () => {
     // もし（if）スコアがコスト以上だったら、購入できる！
     if ( score >= autoCost) {
@@ -94,6 +120,7 @@ setInterval( () => {
 
 // ⑤ 資金（スコア）が足りているかチェックして、ボタンのON/OFFを切り替える関数
 function checkFunds() {
+    buyClickUpgradeBtn.disabled = ( score < clickUpgradeCost);
     buyAutoBtn.disabled = ( score < autoCost);
     buyFactoryBtn.disabled = ( score < factoryCost);
 }
@@ -101,6 +128,9 @@ function checkFunds() {
 // ⑥ 現在の資産状況をブラウザに保存する（記帳する）関数
 function saveGame() {
     localStorage.setItem( 'myScore', score);
+    localStorage.setItem( 'myClickPower', clickPower);
+    localStorage.setItem( 'myClickUpgradeCount', clickUpgradeCount);
+    localStorage.setItem( 'myClickUpgradeCost', clickUpgradeCost);
     localStorage.setItem( 'myAutoCount', autoCount);
     localStorage.setItem( 'myAutoCost', autoCost);
     localStorage.setItem( 'myFactoryCount', factoryCount);
@@ -109,29 +139,33 @@ function saveGame() {
 
 // ⑦ 保存されたデータを読み込む関数
 function loadGame() {
-    const savedScore = localStorage.getItem( 'myScore');
-
     // もしデータが保存されていれば（初めてのプレイでなければ）読み込む
+    const savedScore = localStorage.getItem( 'myScore');
     if ( savedScore !== null) {
         // LocalStorageはデータを「文字」として保存してしまうため、parseIntで「数値」に変換して戻す
         score = parseInt( localStorage.getItem( 'myScore'));
-
-        const savedAutoCount = localStorage.getItem( 'myAutoCount');
-        if ( savedAutoCount !== null) {
-            autoCount = parseInt( localStorage.getItem( 'myAutoCount'));
-            autoCost = parseInt( localStorage.getItem( 'myAutoCost'));
-        }
-
-        const savedFactoryCount = localStorage.getItem( 'myFactoryCount');
-        if ( savedFactoryCount !== null) {
-            factoryCount = parseInt( localStorage.getItem( 'myFactoryCount'));
-            factoryCost = parseInt( localStorage.getItem( 'myFactoryCost'));
-        }
-
-        // 読み込んだデータで画面の表示を更新する
         scoreDisplay.textContent = score;
+    }
+
+    const savedClickPower = localStorage.getItem( 'myClickPower');
+    if ( savedClickPower !== null) {
+        clickPower = parseInt( localStorage.getItem( 'myClickPower'));
+        clickUpgradeCount = parseInt( localStorage.getItem( 'myClickUpgradeCount'));
+        clickUpgradeCost = parseInt( localStorage.getItem( 'myClickUpgradeCost'));
+    }
+
+    const savedAutoCount = localStorage.getItem( 'myAutoCount');
+    if ( savedAutoCount !== null) {
+        autoCount = parseInt( localStorage.getItem( 'myAutoCount'));
+        autoCost = parseInt( localStorage.getItem( 'myAutoCost'));
         autoCountDisplay.textContent =autoCount;
         autoCostDisplay.textContent = autoCost;
+    }
+
+    const savedFactoryCount = localStorage.getItem( 'myFactoryCount');
+    if ( savedFactoryCount !== null) {
+        factoryCount = parseInt( localStorage.getItem( 'myFactoryCount'));
+        factoryCost = parseInt( localStorage.getItem( 'myFactoryCost'));
         factoryCountDisplay.textContent =factoryCount;
         factoryCostDisplay.textContent = factoryCost;
     }
@@ -160,12 +194,18 @@ resetBtn.addEventListener( 'click', () => {
         localStorage.removeItem( 'myFactoryCost');
         // 2. 裏側のデータ（変数）を最初の状態に戻す
         score = 0;
+        clickPower = 1;
+        clickUpgradeCount = 0;
+        clickUpgradeCost = 50;
         autoCount = 0;
         autoCost = 10;
         factoryCount = 0;
         factoryCost = 100;
         // 3. 表側の見た目（HTML）を最初の状態に戻す
         scoreDisplay.textContent = score;
+        currentClickPowerDisplay.textContent = clickPower;
+        clickUpgradeCountDisplay.textContent = clickUpgradeCount;
+        clickUpgradeCostDisplay.textContent = clickUpgradeCost;
         autoCountDisplay.textContent = autoCount;
         autoCostDisplay.textContent = autoCost;
         factoryCountDisplay.textContent = factoryCount;
@@ -177,11 +217,11 @@ resetBtn.addEventListener( 'click', () => {
 
 // ⑩ +1エフェクトを画面に生み出す関数
 // (x, y) は、マウスがクリックされた画面上の座標（位置）を受け取ります
-function createFloatingText( x, y) {
+function createFloatingText( x, y, power) {
     // 1. 新しい span 要素（文字の箱）を空っぽの状態で作成する
     const floatEL = document.createElement( 'span');
     // 2. 箱の中に「+1」という文字を入れる
-    floatEL.textContent = '+1';
+    floatEL.textContent = '+' + power;
     // 3. 先ほどCSSで作った「floating-text」というクラス（デザインとアニメ）をくっつける
     floatEL.className = 'floating-text';
     // 4. マウスの座標に合わせて位置を設定する（少し指の先から出るようにズラしています）
