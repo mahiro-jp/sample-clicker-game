@@ -25,11 +25,16 @@ clickButton.addEventListener('click', ( event) => {
 // ① 新しいデータを保存する箱（変数）を用意する
 let autoCount = 0; // 持っている装置の数
 let autoCost = 10; // 次に装置を買うために必要なスコア（最初は10）
+let factoryCount = 0;
+let factoryCost = 100;
 
 // ② HTMLに書いた新しい「ID」を目印にして、パーツを持ってくる
 const autoCountDisplay = document.getElementById('auto-count');
 const autoCostDisplay = document.getElementById('auto-cost');
 const buyAutoBtn = document.getElementById('buy-auto-btn');
+const factoryCountDisplay = document.getElementById('factory-count');
+const factoryCostDisplay = document.getElementById('factory-cost');
+const buyFactoryBtn = document.getElementById('buy-factory-btn');
 
 // ③ 「装置を買う」ボタンが押されたときの処理
 buyAutoBtn.addEventListener('click', () => {
@@ -53,12 +58,30 @@ buyAutoBtn.addEventListener('click', () => {
     }
 });
 
+buyFactoryBtn.addEventListener( 'click', () => {
+    if ( score >= factoryCost) {
+        score = score - factoryCost;
+        factoryCount = factoryCount + 1;
+        factoryCost = Math.floor( factoryCost * 1.5); // 工場も1.5倍ずつ値上がり
+
+        scoreDisplay.textContent = score;
+        factoryCountDisplay.textContent = factoryCount;
+        factoryCostDisplay.textContent = factoryCost;
+
+        checkFunds();
+        saveGame();
+    }
+});
+
 // ④ 毎秒自動でスコアが増える魔法のタイマー
 setInterval( () => {
+    // 装置の数(×1) ＋ 工場の数(×10) の合計をスコアに足す
+    const production = ( autoCount * 1) + ( factoryCount * 10);
+
     // もし装置を1台以上持っていたら
-    if ( autoCount > 0) {
+    if ( production > 0) {
         // 装置の数だけスコアを増やす
-        score = score + autoCount;
+        score = score + production;
         // 画面のスコアを更新する
         scoreDisplay.textContent = score;
 
@@ -71,11 +94,8 @@ setInterval( () => {
 
 // ⑤ 資金（スコア）が足りているかチェックして、ボタンのON/OFFを切り替える関数
 function checkFunds() {
-    if ( score >= autoCost) {
-        buyAutoBtn.disabled = false;
-    } else {
-        buyAutoBtn.disabled = true;
-    }
+    buyAutoBtn.disabled = ( score < autoCost);
+    buyFactoryBtn.disabled = ( score < factoryCost);
 }
 
 // ⑥ 現在の資産状況をブラウザに保存する（記帳する）関数
@@ -83,6 +103,8 @@ function saveGame() {
     localStorage.setItem( 'myScore', score);
     localStorage.setItem( 'myAutoCount', autoCount);
     localStorage.setItem( 'myAutoCost', autoCost);
+    localStorage.setItem( 'myFactoryCount', factoryCount);
+    localStorage.setItem( 'myFactoryCost', factoryCost);
 }
 
 // ⑦ 保存されたデータを読み込む関数
@@ -93,13 +115,25 @@ function loadGame() {
     if ( savedScore !== null) {
         // LocalStorageはデータを「文字」として保存してしまうため、parseIntで「数値」に変換して戻す
         score = parseInt( localStorage.getItem( 'myScore'));
-        autoCount = parseInt( localStorage.getItem( 'myAutoCount'));
-        autoCost = parseInt( localStorage.getItem( 'myAutoCost'));
+
+        const savedAutoCount = localStorage.getItem( 'myAutoCount');
+        if ( savedAutoCount !== null) {
+            autoCount = parseInt( localStorage.getItem( 'myAutoCount'));
+            autoCost = parseInt( localStorage.getItem( 'myAutoCost'));
+        }
+
+        const savedFactoryCount = localStorage.getItem( 'myFactoryCount');
+        if ( savedFactoryCount !== null) {
+            factoryCount = parseInt( localStorage.getItem( 'myFactoryCount'));
+            factoryCost = parseInt( localStorage.getItem( 'myFactoryCost'));
+        }
 
         // 読み込んだデータで画面の表示を更新する
         scoreDisplay.textContent = score;
         autoCountDisplay.textContent =autoCount;
         autoCostDisplay.textContent = autoCost;
+        factoryCountDisplay.textContent =factoryCount;
+        factoryCostDisplay.textContent = factoryCost;
     }
 }
 
@@ -122,14 +156,20 @@ resetBtn.addEventListener( 'click', () => {
         localStorage.removeItem( 'myScore');
         localStorage.removeItem( 'myAutoCount');
         localStorage.removeItem( 'myAutoCost');
+        localStorage.removeItem( 'myFactoryCount');
+        localStorage.removeItem( 'myFactoryCost');
         // 2. 裏側のデータ（変数）を最初の状態に戻す
         score = 0;
         autoCount = 0;
         autoCost = 10;
+        factoryCount = 0;
+        factoryCost = 100;
         // 3. 表側の見た目（HTML）を最初の状態に戻す
         scoreDisplay.textContent = score;
         autoCountDisplay.textContent = autoCount;
         autoCostDisplay.textContent = autoCost;
+        factoryCountDisplay.textContent = factoryCount;
+        factoryCostDisplay.textContent = factoryCost;
         // 4. ボタンのON/OFF状態を再チェックする（購入ボタンを灰色に戻す）
         checkFunds();
     }
