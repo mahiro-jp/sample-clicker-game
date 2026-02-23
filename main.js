@@ -10,7 +10,7 @@ clickButton.addEventListener('click', ( event) => {
     // スコアを1増やす
     score = score + clickPower;
     // HTMLの「0」と書かれていた部分のテキストを、新しいスコアに書き換える
-    scoreDisplay.textContent = score;
+    updateDisplay();
     // 残高チェック
     checkFunds();
     // セーブ
@@ -48,16 +48,12 @@ buyClickUpgradeBtn.addEventListener( 'click', () => {
     if ( score >= clickUpgradeCost) {
         score = score - clickUpgradeCost;
         clickPower = clickPower + 1; // 1クリックの威力を+1する
+        clickUpgradeCount = clickUpgradeCount + 1;
 
         // 強化は強力なので、コストは1.5倍ではなく「2倍」ずつ増える設定にします
         clickUpgradeCost = Math.floor( clickUpgradeCost * 2);
 
-        // 画面の更新
-        scoreDisplay.textContent = score;
-        clickUpgradeCountDisplay.textContent = clickUpgradeCount;
-        currentClickPowerDisplay.textContent = clickPower;
-        clickUpgradeCostDisplay.textContent = clickUpgradeCost;
-
+        updateDisplay();
         checkFunds();
         saveGame();
     }
@@ -73,9 +69,7 @@ buyAutoBtn.addEventListener('click', () => {
         // 3. 次のコストを値上げする（インフレ要素：1.5倍にして小数点を切り捨てる）
         autoCost = Math.floor( autoCost * 1.5);
         // 4. 変化した数字をすべて画面に反映させる
-        scoreDisplay.textContent = score;
-        autoCountDisplay.textContent = autoCount;
-        autoCostDisplay.textContent = autoCost;
+        updateDisplay();
 
         // 残高チェック
         checkFunds();
@@ -90,10 +84,7 @@ buyFactoryBtn.addEventListener( 'click', () => {
         factoryCount = factoryCount + 1;
         factoryCost = Math.floor( factoryCost * 1.5); // 工場も1.5倍ずつ値上がり
 
-        scoreDisplay.textContent = score;
-        factoryCountDisplay.textContent = factoryCount;
-        factoryCostDisplay.textContent = factoryCost;
-
+        updateDisplay();
         checkFunds();
         saveGame();
     }
@@ -109,7 +100,7 @@ setInterval( () => {
         // 装置の数だけスコアを増やす
         score = score + production;
         // 画面のスコアを更新する
-        scoreDisplay.textContent = score;
+        updateDisplay();
 
         // 残高チェック
         checkFunds();
@@ -123,6 +114,25 @@ function checkFunds() {
     buyClickUpgradeBtn.disabled = ( score < clickUpgradeCost);
     buyAutoBtn.disabled = ( score < autoCost);
     buyFactoryBtn.disabled = ( score < factoryCost);
+}
+
+// ⑪ 画面の表示をすべて最新の状態に更新し、カンマ区切りにする関数
+function updateDisplay() {
+    // .toLocaleString() をつけるだけで、自動で「1,000」のような文字に変換してくれます！
+    scoreDisplay.textContent = score.toLocaleString();
+
+    // マウス強化の表示更新
+    clickUpgradeCountDisplay.textContent = clickUpgradeCount.toLocaleString();
+    currentClickPowerDisplay.textContent = clickPower.toLocaleString();
+    clickUpgradeCostDisplay.textContent = clickUpgradeCost.toLocaleString();
+
+    // 装置の表示更新
+    autoCountDisplay.textContent = autoCount.toLocaleString();
+    autoCostDisplay.textContent = autoCost.toLocaleString();
+
+    // 工場の表示更新
+    factoryCountDisplay.textContent = factoryCount.toLocaleString();
+    factoryCostDisplay.textContent = factoryCost.toLocaleString();
 }
 
 // ⑥ 現在の資産状況をブラウザに保存する（記帳する）関数
@@ -144,7 +154,7 @@ function loadGame() {
     if ( savedScore !== null) {
         // LocalStorageはデータを「文字」として保存してしまうため、parseIntで「数値」に変換して戻す
         score = parseInt( localStorage.getItem( 'myScore'));
-        scoreDisplay.textContent = score;
+        updateDisplay();
     }
 
     const savedClickPower = localStorage.getItem( 'myClickPower');
@@ -152,22 +162,21 @@ function loadGame() {
         clickPower = parseInt( localStorage.getItem( 'myClickPower'));
         clickUpgradeCount = parseInt( localStorage.getItem( 'myClickUpgradeCount'));
         clickUpgradeCost = parseInt( localStorage.getItem( 'myClickUpgradeCost'));
+        updateDisplay();
     }
 
     const savedAutoCount = localStorage.getItem( 'myAutoCount');
     if ( savedAutoCount !== null) {
         autoCount = parseInt( localStorage.getItem( 'myAutoCount'));
         autoCost = parseInt( localStorage.getItem( 'myAutoCost'));
-        autoCountDisplay.textContent =autoCount;
-        autoCostDisplay.textContent = autoCost;
+        updateDisplay();
     }
 
     const savedFactoryCount = localStorage.getItem( 'myFactoryCount');
     if ( savedFactoryCount !== null) {
         factoryCount = parseInt( localStorage.getItem( 'myFactoryCount'));
         factoryCost = parseInt( localStorage.getItem( 'myFactoryCost'));
-        factoryCountDisplay.textContent =factoryCount;
-        factoryCostDisplay.textContent = factoryCost;
+        updateDisplay();
     }
 }
 
@@ -202,14 +211,7 @@ resetBtn.addEventListener( 'click', () => {
         factoryCount = 0;
         factoryCost = 100;
         // 3. 表側の見た目（HTML）を最初の状態に戻す
-        scoreDisplay.textContent = score;
-        currentClickPowerDisplay.textContent = clickPower;
-        clickUpgradeCountDisplay.textContent = clickUpgradeCount;
-        clickUpgradeCostDisplay.textContent = clickUpgradeCost;
-        autoCountDisplay.textContent = autoCount;
-        autoCostDisplay.textContent = autoCost;
-        factoryCountDisplay.textContent = factoryCount;
-        factoryCostDisplay.textContent = factoryCost;
+        updateDisplay();
         // 4. ボタンのON/OFF状態を再チェックする（購入ボタンを灰色に戻す）
         checkFunds();
     }
